@@ -1,16 +1,50 @@
 const express = require('express');
 const router = express.Router();
 const Joke = require('../models/joke.model');
+const protect = require('../middlewares/authMiddleware.js');
 
-// 1. GETing all jokes
-router.get('/', async (req, res) => {
+// GET all jokes with filters
+router.get('/',protect , async (req, res) => {
   try {
-    const jokes = await Joke.find();
+    const { type, search } = req.query;
+
+    let filter = {};
+
+    // filter by type (single or twopart)
+    if (type) {
+      filter.type = type;
+    }
+
+    // keyword search in joke, setup, or punchline
+    if (search) {
+      filter.$or = [
+        { joke: { $regex: search, $options: 'i' } },
+        { setup: { $regex: search, $options: 'i' } },
+        { punchline: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const jokes = await Joke.find(filter);
     res.json(jokes);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Get a random joke
+
+router.get('/random', async (req, res) => {
+try {
+    const count = await Joke.countDocuments();
+  const randomIndex = Math.floor(Math.random()*count);
+  const randomJoke = await Joke.findOne().skip(randomIndex);
+  res.json(randomJoke);
+} catch (err) {
+  res.status.json({error: err.message});
+}
+
+
+})
 
 // 2. GET one joke by ID
 router.get('/:id', async (req, res) => {
@@ -24,7 +58,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // 3. CREATE new joke
-router.post('/', async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
     const newJoke = new Joke(req.body);
     await newJoke.save();
@@ -33,6 +67,8 @@ router.post('/', async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
+
 
 // 4. UPDATE a joke by ID
 router.put('/:id', async (req, res) => {
