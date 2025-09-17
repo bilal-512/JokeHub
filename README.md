@@ -49,65 +49,106 @@
 ---
 
 
+
 ## 📂 Project Structure
 
 ```
 JokeHub/
-│── models/          # Mongoose schemas
-│── routes/          # Express routes
+│── models/          # Mongoose schemas (joke, user)
+│── routes/          # Express routes (jokes, auth, about)
+│── middlewares/     # Custom Express middlewares (auth)
 │── utils/           # Database connection & utilities
 │── server.js        # Entry point
 │── package.json
 │── README.md
+│── .env             # Environment variables
 ```
 
 ---
 
 
+
 ## ⚡ API Endpoints
 
-### Jokes
+### Authentication
 
 | Method | Endpoint            | Description               |
 |--------|---------------------|---------------------------|
-| GET    | `/api/jokes`        | Get all jokes             |
-| GET    | `/api/jokes/:id`    | Get joke by ID            |
-| POST   | `/api/jokes`        | Create a new joke         |
-| PUT    | `/api/jokes/:id`    | Update a joke             |
-| DELETE | `/api/jokes/:id`    | Delete a joke             |
-| GET    | `/api/jokes/random` | Get a random joke 🎲      |
+| POST   | `/api/auth/signup`  | Register a new user       |
+| POST   | `/api/auth/login`   | Login and get JWT token   |
 
-#### Example Responses
-
-**GET `/api/jokes/random`**
+#### Example: Signup
+Request:
 ```json
 {
-   "_id": "6501e2c8f1a2b2c3d4e5f6a7",
-   "type": "twopart",
-   "setup": "Why did the backend developer go broke?",
-   "punchline": "Because he kept working for free APIs!"
-}
-```
-
-**POST `/api/jokes`**
-Request body:
-```json
-{
-   "type": "twopart",
-   "setup": "Why do programmers prefer dark mode?",
-   "punchline": "Because light attracts bugs!"
+   "username": "john",
+   "email": "john@example.com",
+   "password": "password123"
 }
 ```
 Response:
 ```json
 {
-   "message": "Joke created successfully!",
-   "joke": {
-      "_id": "6501e2c8f1a2b2c3d4e5f6a8",
+   "message": "user created successfully"
+}
+```
+
+#### Example: Login
+Request:
+```json
+{
+   "email": "john@example.com",
+   "password": "password123"
+}
+```
+Response:
+```json
+{
+   "token": "<jwt-token>"
+}
+```
+
+---
+
+### Jokes (Protected)
+
+> All joke endpoints (except `/api/jokes/random` and `/api/jokes/:id`) require a valid JWT in the `Authorization: Bearer <token>` header.
+
+| Method | Endpoint            | Description               |
+|--------|---------------------|---------------------------|
+| GET    | `/api/jokes`        | Get all jokes (protected) |
+| GET    | `/api/jokes/:id`    | Get joke by ID            |
+| POST   | `/api/jokes`        | Create a new joke (protected) |
+| PUT    | `/api/jokes/:id`    | Update a joke             |
+| DELETE | `/api/jokes/:id`    | Delete a joke             |
+| GET    | `/api/jokes/random` | Get a random joke         |
+
+#### Example: Get All Jokes
+Request header:
+```
+Authorization: Bearer <jwt-token>
+```
+Response:
+```json
+[
+   {
+      "_id": "...",
       "type": "twopart",
-      "setup": "Why do programmers prefer dark mode?",
-      "punchline": "Because light attracts bugs!"
-   }
+      "setup": "Why did the backend developer go broke?",
+      "punchline": "Because he kept working for free APIs!"
+   },
+   ...
+]
+```
+
+#### Example: Get Random Joke
+Response:
+```json
+{
+   "_id": "...",
+   "type": "twopart",
+   "setup": "Why did the backend developer go broke?",
+   "punchline": "Because he kept working for free APIs!"
 }
 ```
 
@@ -127,10 +168,12 @@ Response:
    npm install
    ```
 
+
 3. **Add environment variables**
    Create a `.env` file in the root with:
    ```env
-   MONGO_URI=your-mongodb-atlas-uri
+   DB_API=your-mongodb-atlas-uri
+   JWT_SECRET=your-jwt-secret
    PORT=3000
    ```
 
@@ -159,10 +202,12 @@ Example **POST body**:
 ---
 
 
+
 ## 🚀 Future Improvements
 
-- Add **JWT authentication** (user login/signup)
 - Pagination for large joke lists
+- User profile & joke favorites
+- Improved error handling & validation
 - Deploy on **Render / Railway / Vercel** with MongoDB Atlas
 
 ---
@@ -176,6 +221,7 @@ Feel free to [open an issue](https://github.com/bilal-512/JokeHub/issues) or sub
 ## 📝 License
 
 This project is licensed under the [MIT License](LICENSE) - see the LICENSE file for details.
+
 
 ## 👨‍💻 Author
 
